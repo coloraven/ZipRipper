@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ZipRipper · Python 版</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- 顶部栏：应用名、引擎能力、结果文件、关闭按钮 -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">ZR</span>
+      <div class="brand-text">
+        <h1>ZipRipper</h1>
+        <p id="tagline">John the Ripper 前端 · 批量 / 掩码 / 字典</p>
+      </div>
+    </div>
+    <div class="topbar-meta">
+      <span class="chip" id="chip-engine">检测引擎中…</span>
+      <span class="chip chip-muted" id="chip-csv" title="">结果文件：读取中…</span>
+      <button class="btn btn-ghost" id="btn-shutdown" title="停止服务并退出">退出</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- 资源状态：John / 7-Zip / Perl / 可选字典 -->
+    <section class="panel">
+      <div class="panel-head">
+        <h2>工具资源</h2>
+        <div class="panel-actions">
+          <button class="btn" id="btn-prefetch">预取全部资源</button>
+          <span class="hint">首次运行需要下载，之后直接复用缓存，不会重复下载。</span>
+        </div>
+      </div>
+      <div class="resource-grid" id="resource-grid"></div>
+    </section>
+
+    <!-- 添加文件：本地浏览 + 手动粘贴路径 -->
+    <section class="panel">
+      <div class="panel-head">
+        <h2>添加待破解文件</h2>
+        <div class="panel-actions">
+          <button class="btn btn-primary" id="btn-browse">浏览本地文件…</button>
+          <span class="hint" id="supported-hint"></span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="paths-input">也可直接粘贴完整路径（每行一个）</label>
+        <textarea id="paths-input" rows="3" placeholder="D:\示例\加密文档.docx&#10;D:\示例\加密压缩包.zip"></textarea>
+      </div>
+      <div class="field-row">
+        <button class="btn btn-primary" id="btn-add">加入队列</button>
+        <span class="hint" id="add-result"></span>
+      </div>
+    </section>
+
+    <!-- 破解设置：字典 / 掩码 / 增量 -->
+    <section class="panel">
+      <div class="panel-head">
+        <h2>破解设置</h2>
+        <span class="hint">同一批次内的所有文件共享以下设置。</span>
+      </div>
+
+      <div class="field">
+        <label>攻击模式</label>
+        <div class="segmented" id="attack-modes">
+          <label><input type="radio" name="attack" value="wordlist" checked> 字典</label>
+          <label><input type="radio" name="attack" value="mask"> 掩码</label>
+          <label><input type="radio" name="attack" value="incremental"> 增量暴力</label>
+        </div>
+      </div>
+
+      <!-- 字典模式 -->
+      <div class="mode-block" id="block-wordlist">
+        <div class="field">
+          <label for="wordlist-select">字典</label>
+          <div class="field-row">
+            <select id="wordlist-select">
+              <option value="">John 自带 password.lst</option>
+              <option value="__rockyou__">rockyou.txt（首次使用需下载约 133MB）</option>
+              <option value="__custom__">自定义字典文件…</option>
+            </select>
+            <button class="btn" id="btn-pick-wordlist">选择字典文件…</button>
+          </div>
+          <input type="text" id="wordlist-path" placeholder="自定义字典的完整路径（留空使用默认字典）">
+          <p class="hint" id="wordlist-hint">支持 .txt / .lst，也支持 .7z 压缩字典（自动解包并缓存）。</p>
+        </div>
+        <div class="field">
+          <label class="checkbox"><input type="checkbox" id="use-rules" checked> 启用规则（single,all）</label>
+        </div>
+      </div>
+
+      <!-- 掩码模式 -->
+      <div class="mode-block" id="block-mask" hidden>
+        <div class="field">
+          <label for="mask-input">掩码表达式</label>
+          <input type="text" id="mask-input" placeholder="例如：?u?l?l?l?d?d  或  ?d?d?d?d?d?d">
+          <p class="hint">John 掩码语法：?l 小写、?u 大写、?d 数字、?s 符号、?a 全部可打印字符；可用 ?1 引用自定义字符集。</p>
+        </div>
+        <div class="field">
+          <label for="charset-input">自定义字符集 1（可选，对应 --1=）</label>
+          <input type="text" id="charset-input" placeholder="例如：abc123">
+        </div>
+      </div>
+
+      <!-- 增量模式 -->
+      <div class="mode-block" id="block-incremental" hidden>
+        <p class="hint">使用 John 的 ASCII 增量字符集做纯暴力破解，适合短密码；速度取决于 CPU/GPU。</p>
+      </div>
+
+      <div class="field-row wrap">
+        <div class="field field-inline">
+          <label for="workers">并发任务数</label>
+          <input type="number" id="workers" min="1" max="8" value="1">
+        </div>
+        <div class="field field-inline">
+          <label for="job-timeout">单任务超时（秒，0 为不限）</label>
+          <input type="number" id="job-timeout" min="0" value="0">
+        </div>
+        <div class="field field-inline">
+          <label class="checkbox"><input type="checkbox" id="use-gpu" checked> 可用时使用显卡（OpenCL）</label>
+        </div>
+      </div>
+    </section>
+
+    <!-- 任务队列 -->
+    <section class="panel">
+      <div class="panel-head">
+        <h2>任务队列</h2>
+        <div class="panel-actions">
+          <span class="hint" id="stats-hint"></span>
+          <button class="btn" id="btn-clear">清空已结束</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="jobs">
+          <thead>
+            <tr>
+              <th class="col-name">文件</th>
+              <th class="col-status">状态</th>
+              <th class="col-progress">进度</th>
+              <th class="col-password">密码</th>
+              <th class="col-actions">操作</th>
+            </tr>
+          </thead>
+          <tbody id="jobs-body"></tbody>
+        </table>
+        <p class="empty" id="jobs-empty">队列为空，先在上方添加文件。</p>
+      </div>
+    </section>
+
+    <!-- 结果说明 -->
+    <section class="panel panel-slim">
+      <div class="panel-head">
+        <h2>结果文件</h2>
+        <div class="panel-actions">
+          <span class="hint">每成功恢复一个密码就追加一行，包含完成时间、文件完整路径、密码与文件哈希。</span>
+          <button class="btn" id="btn-download-csv">下载 CSV</button>
+        </div>
+      </div>
+      <p class="mono" id="csv-path"></p>
+    </section>
+  </main>
+
+  <!-- 文件浏览弹窗 -->
+  <div class="modal" id="modal-browser" hidden>
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3 id="browser-title">选择文件</h3>
+        <button class="btn btn-ghost" id="btn-browser-close">关闭</button>
+      </div>
+      <div class="browser-toolbar">
+        <button class="btn" id="btn-browser-up">上级目录</button>
+        <select id="browser-roots"></select>
+        <input type="text" id="browser-path" readonly>
+      </div>
+      <div class="browser-list" id="browser-list"></div>
+      <div class="modal-foot">
+        <span class="hint" id="browser-selection">已选 0 个文件</span>
+        <div>
+          <button class="btn" id="btn-browser-cancel">取消</button>
+          <button class="btn btn-primary" id="btn-browser-confirm">确定</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

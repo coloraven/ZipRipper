@@ -1,79 +1,149 @@
-# ZipRipper - A CMD script to crack password protected ZIP, RAR, 7z, PDF, and Microsoft Office files, using JohnTheRipper
+# ZipRipper —— 使用 John the Ripper 破解加密文件的密码
 
 <p align="center">
 <img src="https://github.com/illsk1lls/ZipRipper/blob/main/.resources/README.png?raw=true"><br>
-*<sup>Powered by JohnTheRipper</sup>*
+*<sup>由 John the Ripper 提供破解能力</sup>*
 </p>
 
-**Credit To:**<br>
-JohnTheRipper - <a href="https://github.com/openwall/john">https://github.com/openwall/john</a><br>
-cyclone_hk Wordlist(Hosted by Weakpass) - <a href="https://github.com/cyclone-github/wordlist">https://github.com/cyclone-github/wordlist</a><br>
-7zip - <a href="https://www.7-zip.org/">https://www.7-zip.org/</a><br>
-StrawberryPerl(Portable) - <a href="https://strawberryperl.com/releases.html">https://strawberryperl.com/releases.html</a><br>
-Python(Portable/Embeddable) - <a href="https://www.python.org/downloads/windows/">https://www.python.org/downloads/windows/</a><br>
+本仓库提供**两个版本**，功能一致，可按使用习惯任选其一：
 
-**<p align="center">Instructions:**</p>
+| 版本 | 入口 | 适用场景 |
+| --- | --- | --- |
+| **Python 版**（推荐） | `python zipripper.py` | 网页界面、批量处理、掩码攻击、结果表格化、跨文件复用结果 |
+| **CMD 版**（原版） | 双击 `ZipRipper.cmd` | 无需 Python、可打包为完全离线的便携工具 |
 
-**<p align="center">1.) Double-click the script, and click the Start button to begin**</p>
+两个版本都支持：**ZIP / RAR / 7z / PDF / Microsoft Office**（DOC、DOCM、DOCX、XLS、XLSM、XLSX、PPT、PPTM、PPTX），
+并可在支持的情况下使用显卡（OpenCL）加速。
 
-**<p align="center">2.) Choose a password protected ZIP, RAR, 7z, PDF, or Office (DOC/DOCM/DOCX/XLS/XLSM/XLSX/PPT/PPTM/PPTX) file**</p>
+---
 
-**<p align="center">3.) Wait  for  password..**</p>
+## 一、Python 版
 
-*<p align="center">When a password is found an alert window will appear, and the password(s) will be<br>*
-*saved to the users desktop as:* ZipRipper-Passwords.txt</p>
+### 环境要求
 
-If you have questions, head on over to <a href="https://github.com/illsk1lls/ZipRipper/discussions/categories/q-a">Discussions Q&A</a><br>
+* **Python 3.9 及以上**（由用户自备，仓库不打包 Python 运行时）。
+* 首次运行需要联网下载工具；之后全部走缓存，不会重复下载。
+* 无需 `pip install`：项目只使用 Python 标准库。
 
-**Microsoft Office support:**<br>
-Office documents are supported through John's `office2john.py`, which covers the modern OOXML formats (.docx, .docm, .xlsx, .xlsm, .pptx, .pptm) and the legacy binary formats (.doc, .xls, .ppt). Office 2007/2010/2013 encrypted files use the `office` format (OpenCL: `office-opencl`), while Office 97-2003 encrypted files use the `oldoffice` format (OpenCL: `oldoffice-opencl`).<br>
-Because `office2john.py` is a Python script, ZipRipper downloads a small portable Python (embeddable, ~11MB) when an Office file is selected in Online Mode. Offline Mode requires `[zr-offline.txt]` to be rebuilt (click the letters JtR in John's hat) so the portable Python is embedded in it - if it is missing, ZipRipper falls back to a locally installed Python, and reports an error if neither is available.<br>
-Note: Office 2010/2013 hashes use high spin counts, so they can be slow to attack compared to ZIP/RAR.<br>
+### 快速开始
 
-**Current version provides support for hardware acceleration via OpenCL for:**<br>
-nVidia "GeForce", "Quadro", "A Series", "RTX Ada" and AMD "Radeon RX", "Radeon Pro" cards<br>
-
-**All GPU users:** Ensure you have the latest GPU drivers installed.<br>
-**AMD GPU users:** Radeon support is EXPERIMENTAL - For GPU support you can try the following <a href="https://github.com/ptrumpis/OpenCL-AMD-GPU">OpenCL fix</a> if needed<br>
-**INTEL GPU users:** ARC support is EXPERIMENTAL - You may need to install OpenCL.dll with Intel's ICD Loader if they are not automatically present after driver installation. <a href="https://github.com/KhronosGroup/OpenCL-ICD-Loader">https://github.com/KhronosGroup/OpenCL-ICD-Loader</a>
-
-**ZipRipper is portable, there are two different running modes; Online Mode, and Offline mode...**<br>
-
-**Online Mode:** ZipRipper gathers its resources from the web (JohnTheRipper, 7zip, and Portable Perl). Only the script itself and an internet connection are required for this mode.<br>
-
-**Offline Mode:** ZipRipper uses/requires a local resource file [zr-offline.txt]. **The presence of [zr-offline.txt] in the same folder as the script is required and will force offline mode.** An internet connection is not needed for this mode.<br>
-
-**[zr-offline.txt] creator:** Click the letters JtR in John's hat to create [zr-offline.txt], you can then relaunch in offline mode, or package the offline/portable script for use at a later time.<br>
-
-*If the script is interrupted normally (by pressing the 'q' key to quit or the 'red x', once), resume will be enabled. A MD5 hash is created for each job that is used to store the resume data in: %AppData%\ZR-InProgress\\[MD5HASH] to ensure multiple files with the same name can have InProgress jobs simultaneously. If a pending job is found the user is presented with the options of either resuming the job, or bypassing the resume feature and starting a new job.*<br>
-*Note: When a job is completed the resume data is removed. All resume data can be cleared by clicking the center of John's tie.*<br>
-
-**Alternate wordlist options:**<br>
-Click John's mouth and select an option before starting the session. (Clicking an option will register your selection and quietly dismiss the menu, selecting no option will use the default JtR wordlist)<br>
-
-It is possible to change the built in alternate wordlist. The included cyclone_hk alternate wordlist is an optional 667MB download, and 2.3GB expanded on disk. **Although the easiest way to use an additional wordlist other than the built in Cyclone alternate, is the Custom wordlist option, which allows you to select a local file.**<br>
-
-**Examples of how to change the built in alternate wordlist:**<br>
-
--A lightweight/robust wordlist based on RockYou (optional 133MB uncompressed download, and 133MB on disk) you would change the section at the top of the script to the following<br>
+```bat
+python zipripper.py
 ```
-SET WORDLISTNAME="RockYou"
-SET WORDLISTADDR="https://github.com/brannondorsey/naive-hashcat/releases/download/data/rockyou.txt"
+
+或在 Windows 上双击 `ZipRipper-Py.cmd`。
+
+脚本会自动启动一个**只监听本机**的网页服务，并用默认浏览器打开界面（默认地址
+`http://127.0.0.1:8765/`，端口被占用时自动顺延）。
+
+### 功能
+
+* **网页界面**：资源状态、批量选文件、破解设置、任务队列、实时日志、一键下载结果。
+* **批量处理**：一次选择多个文件，按设定并发数并行执行；支持取消、重试、移除。
+* **掩码攻击**：在界面填写 John 掩码表达式（如 `?u?l?l?l?d?d`），可配合自定义字符集 `--1=`。
+* **自定义字典**：可选择本机任意 `.txt` / `.lst`，也支持 `.7z` 压缩字典（自动解包并缓存）；
+  内置“下载 rockyou.txt”选项（约 133MB，下载一次后复用）。
+* **增量暴力**：使用 John 的 ASCII 增量字符集。
+* **结果复用**：按文件内容哈希查历史结果，相同内容的文件（即使路径不同）直接复用密码，
+  不再执行耗时的破解流程。
+* **显卡加速**：检测到 OpenCL 设备时自动使用 `*-opencl` 格式，并做“格式可用性探测”，
+  不可用时自动回退 CPU。
+
+### 结果文件
+
+每成功恢复一个密码，就向**桌面**上的 `password_consumer.csv` **追加**一行（UTF-8-SIG，Excel 可直接打开）：
+
+| 完成时间 | 加密文件完整路径 | 恢复出的密码 | 文件哈希(SHA-256) |
+| --- | --- | --- | --- |
+| 2026-11-24 14:31:02 | `D:\示例\加密文档.docx` | `password123` | `9c94…` |
+
+旧版三列 CSV 会被自动补齐哈希列并重写表头，历史数据不会丢失。
+
+### 常用参数
+
+| 参数 | 说明 |
+| --- | --- |
+| `--host` | 监听地址，默认 `127.0.0.1`（仅本机） |
+| `--port` | 首选端口，默认 `8765`，被占用时自动顺延 |
+| `--no-browser` | 启动后不自动打开浏览器 |
+| `--cache-dir` | 自定义缓存目录（默认 `%LOCALAPPDATA%\ZipRipper`） |
+| `--refresh` | 忽略缓存，强制重新下载工具资源 |
+| `--workers` | 默认并发任务数（1–8） |
+| `--prefetch` | 预下载全部工具资源后退出 |
+| `--check` | 只检查环境并打印报告后退出 |
+
+### 缓存与资源
+
+所有外部工具与字典都保存在缓存目录，**只下载一次**：
+
 ```
--Cyclone/HashesOrg/HashKiller[combined] wordlist (optional 6.53GB download, and 15.02GB expanded on disk) you would change the section at the top of the script to the following<br>
+%LOCALAPPDATA%\ZipRipper\
+├─ bin\7zr.exe                7-Zip 独立解包器
+├─ downloads\                 原始压缩包与 .part 断点文件（支持续传）
+├─ tools\JtR\                 John the Ripper（john.exe、*2john、john.conf）
+├─ tools\JtR\7za.exe          7-Zip 控制台
+├─ tools\perl\                Strawberry Perl 便携版（7z2john.pl / pdf2john.pl 需要）
+├─ wordlists\                 可选字典
+├─ jobs\<哈希>\               每个文件内容的 John 工作目录（断点续跑）
+└─ logs\zipripper.log         运行日志
 ```
-SET WORDLISTNAME="Combined"
-SET WORDLISTADDR="https://download.weakpass.com/wordlists/1927/cyclone.hashesorg.hashkiller.combined.txt.7z"
+
+每个已安装资源目录内都有 `.zr-resource.json` 清单，记录来源与安装时间；
+清单缺失或来源变化时会自动重建，缓存损坏不会导致程序失效。
+
+### 目录结构
+
 ```
--Etc..<br>
+zipripper.py          命令行入口（启动网页界面）
+ZipRipper-Py.cmd      Windows 双击启动器
+zr/                   核心包（详见 zr/README.md）
+├─ config.py          常量、路径、设置对象
+├─ hashing.py         文件内容哈希
+├─ resources.py       工具/字典的缓存与下载
+├─ hashers.py         格式 → John 提取器映射
+├─ engine.py          John 调用封装
+├─ jobs.py            批量队列与并发
+├─ results.py         桌面 CSV 读写与哈希复用
+└─ webui/             本地网页界面（详见 zr/webui/README.md）
+```
 
-More wordlists can be found at <a href="https://weakpass.com/wordlist">https://weakpass.com/wordlist</a> and various other places around the web..<br>
+### 常见问题
 
-**The built in alternate wordlist supports direct download links to:**<br>
+* **Office 破解很慢**：Office 2010/2013 的哈希使用 10 万次迭代（spin count），
+  比 ZIP/RAR 慢得多，建议使用显卡或缩小掩码范围。
+* **7z / PDF 无法破解**：`7z2john.pl` 与 `pdf2john.pl` 都需要 Perl，程序会自动下载便携版 Perl（约 98MB），只需一次。
+* **PDF 依赖**：本项目使用 John 自带的 `pdf2john.pl`（ExifTool 内核），**不需要** `pip install pyhanko`。
+* **没有显卡**：自动使用 CPU 模式；可在界面关闭“显卡加速”以避免探测开销。
+* **端口被占用**：程序会自动尝试后续端口，控制台会打印实际地址。
 
--7z archives containing a single text file<br>
--Raw unarchived txt files<br>
+---
 
-**To enable BruteForce mode:** Create an empty .TXT file, and select it as a wordlist by using the "Custom" wordlist option. This will bypass the wordlist and immediately start BruteForce. 
+## 二、CMD 版（原版）
 
-*UNC Paths and redirected folders are supported.*<br>
+双击 `ZipRipper.cmd`，点击 Start，选择受密码保护的文件，等待结果。
+找到密码后会弹窗提示，并把密码保存到桌面的 `ZipRipper-Passwords.txt`。
+
+* **在线模式**：仅需脚本本身与网络，运行时会自动获取 John、7-Zip、便携 Perl。
+* **离线模式**：脚本同目录存在 `zr-offline.txt` 时自动启用；点击 John 帽子上的
+  “JtR”字母可生成该文件，之后即可断网使用或打包分发。
+* **断点续跑**：正常中断（按 `q` 或点一次红叉）会保存进度；任务以文件 MD5 作为
+  标识存于 `%AppData%\ZR-InProgress\`，同名不同内容的文件互不影响。
+* **字典选项**：点击 John 的嘴可选择内置替代字典、自定义字典或暴力破解模式
+  （选择一个空的 .TXT 作为字典即可进入暴力破解）。
+* **显卡加速**：支持 nVidia GeForce / Quadro / A 系列 / RTX Ada，AMD Radeon RX / Radeon Pro
+  （实验性），以及 Intel ARC（实验性）。
+* **Office 支持**：通过 John 的 `office2john.py` 实现；选中 Office 文件时会自动下载
+  约 11MB 的便携 Python（在线模式）。离线模式需重新生成 `zr-offline.txt` 以内置该资源，
+  若缺失则回退到本机已安装的 Python。
+
+---
+
+## 致谢
+
+* John the Ripper —— <https://github.com/openwall/john>
+* cyclone_hk 字典（由 Weakpass 托管）—— <https://github.com/cyclone-github/wordlist>
+* 7-Zip —— <https://www.7-zip.org/>
+* Strawberry Perl 便携版 —— <https://strawberryperl.com/releases.html>
+* Python（便携/嵌入版）—— <https://www.python.org/downloads/windows/>
+
+有疑问请前往 <https://github.com/illsk1lls/ZipRipper/discussions/categories/q-a> 讨论区。

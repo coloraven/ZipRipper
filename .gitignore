@@ -1,0 +1,13 @@
+# Python 运行时产物
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# 本地缓存与运行产物（Python 版默认写入 %LOCALAPPDATA%\ZipRipper，此处仅兜底）
+.zr-cache/
+jobs/
+logs/
+
+# CMD 版离线资源包（由脚本内的“离线模式构建器”生成，不入库）
+zr-offline.txt

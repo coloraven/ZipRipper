@@ -9,6 +9,7 @@ SET "DL_JTR=https://github.com/openwall/john-packages/releases/download/v1.9.1-c
 SET "DL_7ZR=https://github.com/ip7z/7zip/releases/download/26.02/7zr.exe"
 SET "DL_7ZEXTRA=https://github.com/ip7z/7zip/releases/download/26.02/7z2602-extra.7z"
 SET "DL_PERLPORTABLE=https://strawberryperl.com/download/5.16.3.1/strawberry-perl-5.16.3.1-64bit-portable.zip"
+SET "DL_PYTHONPORTABLE=https://www.python.org/ftp/python/3.11.9/python-3.11.9-embed-amd64.zip"
 REM Supported GPUs
 SET NVIDIA_CARDS=GeForce,RTX,A800,T1000,Quadro
 SET AMD_CARDS=RadeonRX,RadeonPro
@@ -17,7 +18,7 @@ REM Filenames and Folders - Tempfolders in %ProgramData%
 SET "LOGO=%ProgramData%\zipripper.png"
 SET "RESUMEDATAFOLDER=%AppData%\ZR-InProgress"
 SET RESUMEDATAFILES=pwhash,john.pot,john.rec,john.*.rec,john.log,password.lst
-SET TEMPFILES=zr-offline.txt,7zExtra.7z,7zr.exe,perlportable.zip,winX64_1_JtR.7z,zipripper.png,launcher.ZipRipper
+SET TEMPFILES=zr-offline.txt,7zExtra.7z,7zr.exe,perlportable.zip,pythonportable.zip,winX64_1_JtR.7z,zipripper.png,launcher.ZipRipper
 SET TEMPFOLDERS=JtR,ztmp
 REM Everything except resume data is cleaned up when ZipRipper is closed properly.
 CALL :SINGLEINSTANCE
@@ -83,6 +84,7 @@ IF /I NOT "%~dp0" == "%ProgramData%\" (
 )
 SET "NATIVE=ZIP,RAR"
 SET "PERL=7z,PDF"
+SET "PYTHON=DOCX,DOCM,XLSX,XLSM,PPTX,PPTM,DOC,XLS,PPT"
 SET GPU=0
 SET ALLOWSTART=0
 CALL :CHECKWIN
@@ -165,7 +167,7 @@ IF "%~1"=="" (
 			GOTO :MAIN
 		)
 	)
-	SET "LMSG=Please select a password protected ZIP, RAR, 7z, or PDF file"
+	SET "LMSG=Please select a password protected ZIP, RAR, 7z, PDF, or Office file"
 	CALL :LISTMESSAGE "!LMSG!" "Select a target file:"
 	SETLOCAL DISABLEDELAYEDEXPANSION
 	CALL :GETFILE FILENAME
@@ -192,6 +194,12 @@ FOR %%# IN (%PERL%) DO (
 	IF /I "%~x1"==".%%#" (
 		SET ALLOWSTART=1
 		SET ISPERL=1
+	)
+)
+FOR %%# IN (%PYTHON%) DO (
+	IF /I "%~x1"==".%%#" (
+		SET ALLOWSTART=1
+		SET ISPY=1
 	)
 )
 IF NOT "%ALLOWSTART%"=="1" (
@@ -421,11 +429,15 @@ IF "%ISPERL%"=="1" (
 	SET PT=8
 	SET "PERL2=$info.Text=' Downloading Portable Perl';Update-Gui;downloadFile '%DL_PERLPORTABLE%' '%ProgramData%\perlportable.zip';"
 )
-POWERSHELL -nop -c "Add-Type -AssemblyName PresentationFramework, System.Drawing, System.Windows.Forms, WindowsFormsIntegration;[xml]$xaml='<Window xmlns="^""http://schemas.microsoft.com/winfx/2006/xaml/presentation"^"" xmlns:x="^""http://schemas.microsoft.com/winfx/2006/xaml"^"" Title="^"" Initializing..."^"" Height="^""75"^"" Width="^""210"^"" WindowStartupLocation="^""CenterScreen"^"" WindowStyle="^""None"^"" Topmost="^""True"^"" Background="^""#333333"^"" AllowsTransparency="^""True"^""><Canvas><TextBlock Name="^""Info"^"" Canvas.Top="^""3"^"" Text="^"" Initializing..."^"" Foreground="^""#eeeeee"^"" FontWeight="^""Bold"^""/><ProgressBar Canvas.Left="^""5"^"" Canvas.Top="^""28"^"" Width="^""200"^"" Height="^""3"^"" Name="^""Progress"^"" Foreground="^""#FF0000"^""/><TextBlock Name="^""Info2"^"" Canvas.Top="^""38"^"" Text="^"" Getting Resources (Online Mode)"^"" Foreground="^""#eeeeee"^"" FontWeight="^""Bold"^""/><ProgressBar Canvas.Left="^""5"^"" Canvas.Top="^""63"^"" Width="^""200"^"" Height="^""3"^"" Name="^""Progress2"^"" Foreground="^""#FF0000"^""/></Canvas><Window.TaskbarItemInfo><TaskbarItemInfo/></Window.TaskbarItemInfo></Window>';$reader=(New-Object System.Xml.XmlNodeReader $xaml);$form=[Windows.Markup.XamlReader]::Load($reader);$bitmap=New-Object System.Windows.Media.Imaging.BitmapImage;$bitmap='%LOGO:'=''%';$form.Icon=$bitmap;$form.TaskbarItemInfo.Overlay=$bitmap;$form.TaskbarItemInfo.Description=$form.Title;$form.Add_Closing({[System.Windows.Forms.Application]::Exit();Stop-Process $pid});$progressBar=$form.FindName("^""Progress"^"");$progressTotal=$form.FindName("^""Progress2"^"");$info=$form.FindName("^""Info"^"");$info2=$form.FindName("^""Info2"^"");function Update-Gui(){$form.Dispatcher.Invoke([Windows.Threading.DispatcherPriority]::Background, [action]{})};function GetResources(){$info.Text=' Initializing...';$progressTotal.Value=%PT%;Update-Gui;$info.Text=' Downloading 7zr Standalone';Update-Gui;downloadFile '%DL_7ZR%' '%ProgramData%\7zr.exe';$info.Text=' Downloading 7za Console';Update-Gui;downloadFile '%DL_7ZEXTRA%' '%ProgramData%\7zExtra.7z';$info.Text=' Downloading JohnTheRipper';Update-Gui;downloadFile '%DL_JTR%' '%ProgramData%\winX64_1_JtR.7z';%PERL2%$progressTotal.Value=100;$info.Text="^"" Ready..."^"";Update-Gui};function DownloadFile($url,$targetFile){$uri=New-Object "^""System.Uri"^"" "^""$url"^"";$request=[System.Net.HttpWebRequest]::Create($uri);$request.set_Timeout(15000);$response=$request.GetResponse();$totalLength=[System.Math]::Floor($response.get_ContentLength()/1024);$responseStream=$response.GetResponseStream();$targetStream=New-Object -TypeName System.IO.FileStream -ArgumentList $targetFile, Create;$buffer=new-object byte[] 10KB;$count=$responseStream.Read($buffer,0,$buffer.length);$downloadedBytes=$count;while ($count -gt 0){$targetStream.Write($buffer, 0, $count);$count=$responseStream.Read($buffer,0,$buffer.length);$downloadedBytes=$downloadedBytes + $count;$roundedPercent=[int]((([System.Math]::Floor($downloadedBytes/1024)) / $totalLength) * 100);$progressBar.Value=$roundedPercent;if($totalP -ge %P%){$progressTotal.Value++;$totalP=0};if($progressBar.Value -ne $lastpercent){$lastpercent=$progressBar.Value;$totalP++;Update-Gui}};$targetStream.Flush();$targetStream.Close();$targetStream.Dispose();$responseStream.Dispose()};$form.Add_ContentRendered({GetResources;$form.Close()});$form.Show();$appContext=New-Object System.Windows.Forms.ApplicationContext;[void][System.Windows.Forms.Application]::Run($appContext)">nul
+IF "%ISPY%"=="1" (
+	SET /A P+=1
+	SET "PYTHON2=$info.Text=' Downloading Portable Python';Update-Gui;downloadFile '%DL_PYTHONPORTABLE%' '%ProgramData%\pythonportable.zip';"
+)
+POWERSHELL -nop -c "Add-Type -AssemblyName PresentationFramework, System.Drawing, System.Windows.Forms, WindowsFormsIntegration;[xml]$xaml='<Window xmlns="^""http://schemas.microsoft.com/winfx/2006/xaml/presentation"^"" xmlns:x="^""http://schemas.microsoft.com/winfx/2006/xaml"^"" Title="^"" Initializing..."^"" Height="^""75"^"" Width="^""210"^"" WindowStartupLocation="^""CenterScreen"^"" WindowStyle="^""None"^"" Topmost="^""True"^"" Background="^""#333333"^"" AllowsTransparency="^""True"^""><Canvas><TextBlock Name="^""Info"^"" Canvas.Top="^""3"^"" Text="^"" Initializing..."^"" Foreground="^""#eeeeee"^"" FontWeight="^""Bold"^""/><ProgressBar Canvas.Left="^""5"^"" Canvas.Top="^""28"^"" Width="^""200"^"" Height="^""3"^"" Name="^""Progress"^"" Foreground="^""#FF0000"^""/><TextBlock Name="^""Info2"^"" Canvas.Top="^""38"^"" Text="^"" Getting Resources (Online Mode)"^"" Foreground="^""#eeeeee"^"" FontWeight="^""Bold"^""/><ProgressBar Canvas.Left="^""5"^"" Canvas.Top="^""63"^"" Width="^""200"^"" Height="^""3"^"" Name="^""Progress2"^"" Foreground="^""#FF0000"^""/></Canvas><Window.TaskbarItemInfo><TaskbarItemInfo/></Window.TaskbarItemInfo></Window>';$reader=(New-Object System.Xml.XmlNodeReader $xaml);$form=[Windows.Markup.XamlReader]::Load($reader);$bitmap=New-Object System.Windows.Media.Imaging.BitmapImage;$bitmap='%LOGO:'=''%';$form.Icon=$bitmap;$form.TaskbarItemInfo.Overlay=$bitmap;$form.TaskbarItemInfo.Description=$form.Title;$form.Add_Closing({[System.Windows.Forms.Application]::Exit();Stop-Process $pid});$progressBar=$form.FindName("^""Progress"^"");$progressTotal=$form.FindName("^""Progress2"^"");$info=$form.FindName("^""Info"^"");$info2=$form.FindName("^""Info2"^"");function Update-Gui(){$form.Dispatcher.Invoke([Windows.Threading.DispatcherPriority]::Background, [action]{})};function GetResources(){$info.Text=' Initializing...';$progressTotal.Value=%PT%;Update-Gui;$info.Text=' Downloading 7zr Standalone';Update-Gui;downloadFile '%DL_7ZR%' '%ProgramData%\7zr.exe';$info.Text=' Downloading 7za Console';Update-Gui;downloadFile '%DL_7ZEXTRA%' '%ProgramData%\7zExtra.7z';$info.Text=' Downloading JohnTheRipper';Update-Gui;downloadFile '%DL_JTR%' '%ProgramData%\winX64_1_JtR.7z';%PYTHON2%%PERL2%$progressTotal.Value=100;$info.Text="^"" Ready..."^"";Update-Gui};function DownloadFile($url,$targetFile){$uri=New-Object "^""System.Uri"^"" "^""$url"^"";$request=[System.Net.HttpWebRequest]::Create($uri);$request.set_Timeout(15000);$response=$request.GetResponse();$totalLength=[System.Math]::Floor($response.get_ContentLength()/1024);$responseStream=$response.GetResponseStream();$targetStream=New-Object -TypeName System.IO.FileStream -ArgumentList $targetFile, Create;$buffer=new-object byte[] 10KB;$count=$responseStream.Read($buffer,0,$buffer.length);$downloadedBytes=$count;while ($count -gt 0){$targetStream.Write($buffer, 0, $count);$count=$responseStream.Read($buffer,0,$buffer.length);$downloadedBytes=$downloadedBytes + $count;$roundedPercent=[int]((([System.Math]::Floor($downloadedBytes/1024)) / $totalLength) * 100);$progressBar.Value=$roundedPercent;if($totalP -ge %P%){$progressTotal.Value++;$totalP=0};if($progressBar.Value -ne $lastpercent){$lastpercent=$progressBar.Value;$totalP++;Update-Gui}};$targetStream.Flush();$targetStream.Close();$targetStream.Dispose();$responseStream.Dispose()};$form.Add_ContentRendered({GetResources;$form.Close()});$form.Show();$appContext=New-Object System.Windows.Forms.ApplicationContext;[void][System.Windows.Forms.Application]::Run($appContext)">nul
 EXIT /b
 
 :OFFLINEMODE
-SET NEEDED=7zr.exe,7zExtra.7z,winX64_1_JtR.7z,perlportable.zip,zipripper.png
+SET NEEDED=7zr.exe,7zExtra.7z,winX64_1_JtR.7z,perlportable.zip,pythonportable.zip,zipripper.png
 SET EXTRACT=0
 <NUL set /p=Offline mode enabled
 FOR %%# IN (%NEEDED%) DO (
@@ -459,7 +471,10 @@ IF EXIST !wListOuter! (
 IF "%ISPERL%"=="1" (
 	"%ProgramData%\JtR\7za.exe" x -y "%ProgramData%\perlportable.zip" -o"%ProgramData%\JtR\run">nul
 )
-FOR %%# IN (perlportable.zip,zr-offline.txt,winX64_1_JtR.7z,7zr.exe,7zExtra.7z) DO (
+IF "%ISPY%"=="1" (
+	"%ProgramData%\JtR\7za.exe" x -y "%ProgramData%\pythonportable.zip" -o"%ProgramData%\JtR\run\python">nul 2>&1
+)
+FOR %%# IN (perlportable.zip,pythonportable.zip,zr-offline.txt,winX64_1_JtR.7z,7zr.exe,7zExtra.7z) DO (
 	IF /I EXIST "%ProgramData%\%%#" (
 		>nul 2>&1 DEL "%ProgramData%\%%#" /F /Q 
 	)
@@ -494,6 +509,36 @@ FOR /F "tokens=1 delims=:/" %%# IN ("!pwhash!") DO (
 SET "NEWNAME=%~nx1"
 IF "%ALT%"=="1" (
 	POWERSHELL -nop -c "Add-Type -AssemblyName System.Windows.Forms;$^={$Notify=[PowerShell]::Create().AddScript({$Audio=New-Object System.Media.SoundPlayer;$Audio.SoundLocation=$env:WinDir + '\Media\Windows Notify System Generic.wav';$Audio.playsync()});$rs=[RunspaceFactory]::CreateRunspace();$rs.ApartmentState="^""STA"^"";$rs.ThreadOptions="^""ReuseThread"^"";$rs.Open();$Notify.Runspace=$rs;$Notify.BeginInvoke()};&$^;[System.Windows.Forms.MessageBox]::Show("^""This file has been renamed since the initial session. The filename will be updated in the saved session data.`n`nInitial file name: %OLDNAME%`n`nCurrent file name: %~nx1`n`nIt is recommended that you do not change the file name after the initial session to avoid potential issues, but it is not a requirement, and the session is able to resume anyway..."^"", 'WARNING: File name change detected!',0,0,0,131072);$update=[System.IO.File]::ReadAllText('%ProgramData%\JtR\run\pwhash').Replace('%OLDNAME:'=''%','%NEWNAME:'=''%');[System.IO.File]::WriteAllText('%ProgramData%\JtR\run\pwhash', $update)">nul
+)
+EXIT /b
+
+:GETPYTHON
+SET "PYCMD="
+IF EXIST "%ProgramData%\JtR\run\python\python.exe" (
+	SET PYCMD="%ProgramData%\JtR\run\python\python.exe"
+	EXIT /b
+)
+CALL :FINDPYTHON python.exe
+IF NOT DEFINED PYCMD (
+	CALL :FINDPYTHON3 py.exe
+)
+EXIT /b
+
+:FINDPYTHON
+FOR /F "usebackq delims=" %%# IN (`WHERE %~1 2^>nul`) DO (
+	IF NOT DEFINED PYCMD (
+		"%%#" -c "pass">nul 2>&1
+		IF NOT ERRORLEVEL 1 SET PYCMD="%%#"
+	)
+)
+EXIT /b
+
+:FINDPYTHON3
+FOR /F "usebackq delims=" %%# IN (`WHERE %~1 2^>nul`) DO (
+	IF NOT DEFINED PYCMD (
+		"%%#" -3 -c "pass">nul 2>&1
+		IF NOT ERRORLEVEL 1 SET PYCMD="%%#" -3
+	)
 )
 EXIT /b
 
@@ -586,6 +631,58 @@ IF %HSIZE% LSS 8000 (
 	FOR /F "usebackq tokens=*" %%# IN (`TYPE pwhash ^| findstr /I /C^:"not encrypted!"`) DO (
 		SET PROTECTED=0
 		SET "ERRORMSG=is not password protected.."
+	)
+)
+CALL :SETSTATUSANDFLAGS
+EXIT /b
+
+:HASH.DOCX
+:HASH.DOCM
+:HASH.XLSX
+:HASH.XLSM
+:HASH.PPTX
+:HASH.PPTM
+:HASH.DOC
+:HASH.XLS
+:HASH.PPT
+CALL :OFFICEHASH "%~1"
+EXIT /b
+
+:OFFICEHASH
+CALL :GETPYTHON
+IF NOT DEFINED PYCMD (
+	SET PROTECTED=0
+	SET "ERRORMSG=is not supported.. Python is required to extract Office password hashes (portable Python unavailable and no system Python installation found)"
+	EXIT /b
+)
+%PYCMD% "%ProgramData%\JtR\run\office2john.py" "%~1">"%ProgramData%\JtR\run\pwhash" 2>"%ProgramData%\JtR\run\statusout"
+SET /p pwhash=< pwhash
+FOR /F %%# IN ("%ProgramData%\JtR\run\pwhash") DO (
+	SET HSIZE=%%~z#
+)
+IF %HSIZE% EQU 0 (
+	SET PROTECTED=0
+	FOR /F "usebackq tokens=*" %%# IN (`TYPE "%ProgramData%\JtR\run\statusout" ^| findstr /I /C^:"zip container found"`) DO (
+		SET "ERRORMSG=is not password protected.."
+	)
+	IF NOT DEFINED ERRORMSG (
+		FOR /F "usebackq tokens=*" %%# IN (`TYPE "%ProgramData%\JtR\run\statusout" ^| findstr /I /C^:"Document is not encrypted"`) DO (
+			SET "ERRORMSG=is not password protected.."
+		)
+	)
+	IF NOT DEFINED ERRORMSG (
+		FOR /F "usebackq tokens=*" %%# IN (`TYPE "%ProgramData%\JtR\run\statusout" ^| findstr /I /C^:"Invalid OLE file"`) DO (
+			SET "ERRORMSG=is not a supported Office file.."
+		)
+	)
+	IF NOT DEFINED ERRORMSG (
+		FOR /F "usebackq tokens=*" %%# IN (`TYPE "%ProgramData%\JtR\run\statusout" ^| findstr /I /C^:"No supported streams found"`) DO (
+			SET "ERRORMSG=is not a supported Office file.. (no encrypted streams found)"
+		)
+	)
+	IF NOT DEFINED ERRORMSG (
+		SET PROTECTED=2
+		SET /p ERRORMSG=< "%ProgramData%\JtR\run\statusout"
 	)
 )
 CALL :SETSTATUSANDFLAGS
@@ -737,6 +834,30 @@ IF /I "%FILETYPE%"==".pdf" (
 		CALL :NOOPENCL
 	)
 )
+IF /I "%FILETYPE%"==".docx" CALL :OFFICEFLAGS office
+IF /I "%FILETYPE%"==".docm" CALL :OFFICEFLAGS office
+IF /I "%FILETYPE%"==".xlsx" CALL :OFFICEFLAGS office
+IF /I "%FILETYPE%"==".xlsm" CALL :OFFICEFLAGS office
+IF /I "%FILETYPE%"==".pptx" CALL :OFFICEFLAGS office
+IF /I "%FILETYPE%"==".pptm" CALL :OFFICEFLAGS office
+IF /I "%FILETYPE%"==".doc" CALL :OFFICEFLAGS oldoffice
+IF /I "%FILETYPE%"==".xls" CALL :OFFICEFLAGS oldoffice
+IF /I "%FILETYPE%"==".ppt" CALL :OFFICEFLAGS oldoffice
+EXIT /b
+
+:OFFICEFLAGS
+SETLOCAL ENABLEDELAYEDEXPANSION
+IF !GPU! GEQ 1 (
+	ENDLOCAL
+	SET "FLAG=--format=%~1-opencl"
+	CALL :OPENCLENABLED
+) ELSE (
+	ENDLOCAL
+	CALL :NOOPENCL
+	IF NOT "%RESUME%"=="1" (
+		CALL :CPUMODESPLIT
+	)
+)
 EXIT /b
 
 :OPENCLENABLED
@@ -842,7 +963,7 @@ EXIT /b
 EXIT /b
 
 :GETFILE
-FOR /F "usebackq tokens=* delims=" %%# IN (`POWERSHELL -nop -c "Add-Type -AssemblyName System.Windows.Forms;$^=New-Object System.Windows.Forms.OpenFileDialog -Property @{InitialDirectory='';Title='Select a password protected ZIP, RAR, 7z or PDF...';Filter='All Supported (*.zip;*.rar;*.7z;*.pdf)|*.zip;*.rar;*.7z;*.pdf|ZIP (*.zip)|*.zip|RAR (*.rar)|*.rar|7-Zip (*.7z)|*.7z|PDF (*.pdf)|*.pdf'};$null=$^.ShowDialog();$Quoted='"^""' + $^^.Filename + '"^""';$Quoted"`) DO (
+FOR /F "usebackq tokens=* delims=" %%# IN (`POWERSHELL -nop -c "Add-Type -AssemblyName System.Windows.Forms;$^=New-Object System.Windows.Forms.OpenFileDialog -Property @{InitialDirectory='';Title='Select a password protected ZIP, RAR, 7z, PDF, or Office file...';Filter='All Supported (*.zip;*.rar;*.7z;*.pdf;*.docx;*.docm;*.doc;*.xlsx;*.xlsm;*.xls;*.pptx;*.pptm;*.ppt)|*.zip;*.rar;*.7z;*.pdf;*.docx;*.docm;*.doc;*.xlsx;*.xlsm;*.xls;*.pptx;*.pptm;*.ppt|ZIP (*.zip)|*.zip|RAR (*.rar)|*.rar|7-Zip (*.7z)|*.7z|PDF (*.pdf)|*.pdf|Word (*.docx;*.docm;*.doc)|*.docx;*.docm;*.doc|Excel (*.xlsx;*.xlsm;*.xls)|*.xlsx;*.xlsm;*.xls|PowerPoint (*.pptx;*.pptm;*.ppt)|*.pptx;*.pptm;*.ppt'};$null=$^.ShowDialog();$Quoted='"^""' + $^^.Filename + '"^""';$Quoted"`) DO (
 	SET "%1=%%#"
 )
 EXIT /b
@@ -956,8 +1077,9 @@ PUSHD "%ProgramData%\ztmp"
 	ECHO 102 "perlportable.zip"
 	ECHO 103 "winX64_1_JtR.7z"
 	ECHO 104 "zipripper.png"
+	ECHO 105 "pythonportable.zip"
 )>"%ProgramData%\ztmp\offline.config"
-POWERSHELL -nop -c "Add-Type -AssemblyName PresentationFramework, System.Drawing, System.Windows.Forms, WindowsFormsIntegration;[xml]$xaml='<Window xmlns="^""http://schemas.microsoft.com/winfx/2006/xaml/presentation"^"" xmlns:x="^""http://schemas.microsoft.com/winfx/2006/xaml"^"" Title="^""Building [zr-offline.txt]"^"" Height="^""75"^"" Width="^""210"^"" WindowStartupLocation="^""CenterScreen"^"" WindowStyle="^""None"^"" Topmost="^""True"^"" Background="^""#333333"^"" AllowsTransparency="^""True"^""><Canvas><TextBlock Name="^""Info"^"" Canvas.Top="^""3"^"" Text="^"" Initializing..."^"" Foreground="^""#eeeeee"^"" FontWeight="^""Bold"^""/><ProgressBar Canvas.Left="^""5"^"" Canvas.Top="^""28"^"" Width="^""200"^"" Height="^""3"^"" Name="^""Progress"^"" Foreground="^""#FF0000"^""/><TextBlock Name="^""Info2"^"" Canvas.Top="^""38"^"" Text="^"" Getting Resources (Stage 1/2)"^"" Foreground="^""#eeeeee"^"" FontWeight="^""Bold"^""/><ProgressBar Canvas.Left="^""5"^"" Canvas.Top="^""63"^"" Width="^""200"^"" Height="^""3"^"" Name="^""Progress2"^"" Foreground="^""#FF0000"^""/></Canvas><Window.TaskbarItemInfo><TaskbarItemInfo/></Window.TaskbarItemInfo></Window>';$reader=(New-Object System.Xml.XmlNodeReader $xaml);$form=[Windows.Markup.XamlReader]::Load($reader);$bitmap=New-Object System.Windows.Media.Imaging.BitmapImage;$bitmap='%ProgramData%\zipripper.png';$form.Icon=$bitmap;$form.TaskbarItemInfo.Overlay=$bitmap;$form.TaskbarItemInfo.Description=$form.Title;$form.Add_Closing({[System.Windows.Forms.Application]::Exit();Stop-Process $pid});$progressBar=$form.FindName("^""Progress"^"");$progressTotal=$form.FindName("^""Progress2"^"");$info=$form.FindName("^""Info"^"");$info2=$form.FindName("^""Info2"^"");function Update-Gui (){$form.Dispatcher.Invoke([Windows.Threading.DispatcherPriority]::Background, [action]{})};function Build () {$info.Text=' Downloading 7zr Standalone';Update-Gui;downloadFile '%DL_7ZR%' '%ProgramData%\ztmp\101';$info.Text=' Downloading 7za Console';Update-Gui;downloadFile '%DL_7ZEXTRA%' '%ProgramData%\ztmp\100';$info.Text=' Downloading JohnTheRipper';Update-Gui;downloadFile '%DL_JTR%' '%ProgramData%\ztmp\103';$info.Text=' Downloading Portable Perl';Update-Gui;downloadFile '%DL_PERLPORTABLE%' '%ProgramData%\ztmp\102';$progressBar.Value=0;$info.Text=' Merging resources'; $info2.Text=' Building zr-offline.txt (Stage 2/2)';$pass=1;Update-Gui;makecab.exe /F '%ProgramData%\ztmp\offline.config' /D Compress='OFF' /D CabinetNameTemplate='%ProgramData%\ztmp\zr-offline.txt'| out-string -stream | Select-String -Pattern "^""(\d{1,3})(?=[.]\d{1,2}%%)"^"" -AllMatches | ForEach-Object { $_.Matches.Value } | foreach {$progressBar.Value=$_;if($totalP2 -ge 6){$progressTotal.Value=$progressTotal.Value + 1;$totalP2=0};if($progressBar.Value -ne $lastpercent){$lastpercent=$progressBar.Value;$totalP2++};if($progressBar.Value -ge 100){$pass++};if($pass -eq 2){$info.Text="^"" Building data file"^"";if($progressBar.Value -eq 99){$pass++}};if($pass -eq 3){$info.Text="^"" Purging Cache"^""};if($progressBar.Value -ne $lastpercent2){$lastpercent2=$progressBar.Value;Update-Gui}};$progressBar.Value=100;$m=([IO.File]::ReadAllLines('%ProgramData%\launcher.ZipRipper')).Replace('"^""','');Move-Item -Path '%ProgramData%\ztmp\zr-offline.txt' -Destination "^""$m"^"" -Force;$progressTotal.Value=100;$info.Text="^"" Build Completed!"^"";Update-Gui;Sleep 3};function DownloadFile($url,$targetFile){$uri=New-Object "^""System.Uri"^"" "^""$url"^"";$request=[System.Net.HttpWebRequest]::Create($uri);$request.set_Timeout(15000);$response=$request.GetResponse();$totalLength=[System.Math]::Floor($response.get_ContentLength()/1024);$responseStream=$response.GetResponseStream();$targetStream=New-Object -TypeName System.IO.FileStream -ArgumentList $targetFile, Create;$buffer=new-object byte[] 10KB;$count=$responseStream.Read($buffer,0,$buffer.length);$downloadedBytes=$count;while ($count -gt 0){$targetStream.Write($buffer, 0, $count);$count=$responseStream.Read($buffer,0,$buffer.length);$downloadedBytes=$downloadedBytes + $count;$roundedPercent=[int]((([System.Math]::Floor($downloadedBytes/1024))/$totalLength)*100);$progressBar.Value=$roundedPercent;if($totalP -ge 7){$progressTotal.Value++;$totalP=0};if($progressBar.Value -ne $lastpercent){$lastpercent=$progressBar.Value;$totalP++;Update-Gui}};$targetStream.Flush();$targetStream.Close();$targetStream.Dispose();$responseStream.Dispose()};$form.Add_ContentRendered({Build;$form.Close()});$form.Show();$appContext=New-Object System.Windows.Forms.ApplicationContext;[void][System.Windows.Forms.Application]::Run($appContext)">nul
+POWERSHELL -nop -c "Add-Type -AssemblyName PresentationFramework, System.Drawing, System.Windows.Forms, WindowsFormsIntegration;[xml]$xaml='<Window xmlns="^""http://schemas.microsoft.com/winfx/2006/xaml/presentation"^"" xmlns:x="^""http://schemas.microsoft.com/winfx/2006/xaml"^"" Title="^""Building [zr-offline.txt]"^"" Height="^""75"^"" Width="^""210"^"" WindowStartupLocation="^""CenterScreen"^"" WindowStyle="^""None"^"" Topmost="^""True"^"" Background="^""#333333"^"" AllowsTransparency="^""True"^""><Canvas><TextBlock Name="^""Info"^"" Canvas.Top="^""3"^"" Text="^"" Initializing..."^"" Foreground="^""#eeeeee"^"" FontWeight="^""Bold"^""/><ProgressBar Canvas.Left="^""5"^"" Canvas.Top="^""28"^"" Width="^""200"^"" Height="^""3"^"" Name="^""Progress"^"" Foreground="^""#FF0000"^""/><TextBlock Name="^""Info2"^"" Canvas.Top="^""38"^"" Text="^"" Getting Resources (Stage 1/2)"^"" Foreground="^""#eeeeee"^"" FontWeight="^""Bold"^""/><ProgressBar Canvas.Left="^""5"^"" Canvas.Top="^""63"^"" Width="^""200"^"" Height="^""3"^"" Name="^""Progress2"^"" Foreground="^""#FF0000"^""/></Canvas><Window.TaskbarItemInfo><TaskbarItemInfo/></Window.TaskbarItemInfo></Window>';$reader=(New-Object System.Xml.XmlNodeReader $xaml);$form=[Windows.Markup.XamlReader]::Load($reader);$bitmap=New-Object System.Windows.Media.Imaging.BitmapImage;$bitmap='%ProgramData%\zipripper.png';$form.Icon=$bitmap;$form.TaskbarItemInfo.Overlay=$bitmap;$form.TaskbarItemInfo.Description=$form.Title;$form.Add_Closing({[System.Windows.Forms.Application]::Exit();Stop-Process $pid});$progressBar=$form.FindName("^""Progress"^"");$progressTotal=$form.FindName("^""Progress2"^"");$info=$form.FindName("^""Info"^"");$info2=$form.FindName("^""Info2"^"");function Update-Gui (){$form.Dispatcher.Invoke([Windows.Threading.DispatcherPriority]::Background, [action]{})};function Build () {$info.Text=' Downloading 7zr Standalone';Update-Gui;downloadFile '%DL_7ZR%' '%ProgramData%\ztmp\101';$info.Text=' Downloading 7za Console';Update-Gui;downloadFile '%DL_7ZEXTRA%' '%ProgramData%\ztmp\100';$info.Text=' Downloading JohnTheRipper';Update-Gui;downloadFile '%DL_JTR%' '%ProgramData%\ztmp\103';$info.Text=' Downloading Portable Python';Update-Gui;downloadFile '%DL_PYTHONPORTABLE%' '%ProgramData%\ztmp\105';$info.Text=' Downloading Portable Perl';Update-Gui;downloadFile '%DL_PERLPORTABLE%' '%ProgramData%\ztmp\102';$progressBar.Value=0;$info.Text=' Merging resources'; $info2.Text=' Building zr-offline.txt (Stage 2/2)';$pass=1;Update-Gui;makecab.exe /F '%ProgramData%\ztmp\offline.config' /D Compress='OFF' /D CabinetNameTemplate='%ProgramData%\ztmp\zr-offline.txt'| out-string -stream | Select-String -Pattern "^""(\d{1,3})(?=[.]\d{1,2}%%)"^"" -AllMatches | ForEach-Object { $_.Matches.Value } | foreach {$progressBar.Value=$_;if($totalP2 -ge 6){$progressTotal.Value=$progressTotal.Value + 1;$totalP2=0};if($progressBar.Value -ne $lastpercent){$lastpercent=$progressBar.Value;$totalP2++};if($progressBar.Value -ge 100){$pass++};if($pass -eq 2){$info.Text="^"" Building data file"^"";if($progressBar.Value -eq 99){$pass++}};if($pass -eq 3){$info.Text="^"" Purging Cache"^""};if($progressBar.Value -ne $lastpercent2){$lastpercent2=$progressBar.Value;Update-Gui}};$progressBar.Value=100;$m=([IO.File]::ReadAllLines('%ProgramData%\launcher.ZipRipper')).Replace('"^""','');Move-Item -Path '%ProgramData%\ztmp\zr-offline.txt' -Destination "^""$m"^"" -Force;$progressTotal.Value=100;$info.Text="^"" Build Completed!"^"";Update-Gui;Sleep 3};function DownloadFile($url,$targetFile){$uri=New-Object "^""System.Uri"^"" "^""$url"^"";$request=[System.Net.HttpWebRequest]::Create($uri);$request.set_Timeout(15000);$response=$request.GetResponse();$totalLength=[System.Math]::Floor($response.get_ContentLength()/1024);$responseStream=$response.GetResponseStream();$targetStream=New-Object -TypeName System.IO.FileStream -ArgumentList $targetFile, Create;$buffer=new-object byte[] 10KB;$count=$responseStream.Read($buffer,0,$buffer.length);$downloadedBytes=$count;while ($count -gt 0){$targetStream.Write($buffer, 0, $count);$count=$responseStream.Read($buffer,0,$buffer.length);$downloadedBytes=$downloadedBytes + $count;$roundedPercent=[int]((([System.Math]::Floor($downloadedBytes/1024))/$totalLength)*100);$progressBar.Value=$roundedPercent;if($totalP -ge 7){$progressTotal.Value++;$totalP=0};if($progressBar.Value -ne $lastpercent){$lastpercent=$progressBar.Value;$totalP++;Update-Gui}};$targetStream.Flush();$targetStream.Close();$targetStream.Dispose();$responseStream.Dispose()};$form.Add_ContentRendered({Build;$form.Close()});$form.Show();$appContext=New-Object System.Windows.Forms.ApplicationContext;[void][System.Windows.Forms.Application]::Run($appContext)">nul
 POPD
 >nul 2>&1 RD "%ProgramData%\ztmp" /S /Q
 FOR /F "usebackq tokens=* delims=" %%# IN (`POWERSHELL -nop -c "Add-Type -AssemblyName System.Windows.Forms;$^={$Notify=[PowerShell]::Create().AddScript({$Audio=New-Object System.Media.SoundPlayer;$Audio.SoundLocation=$env:WinDir + '\Media\Windows Notify System Generic.wav';$Audio.playsync()});$rs=[RunspaceFactory]::CreateRunspace();$rs.ApartmentState="^""STA"^"";$rs.ThreadOptions="^""ReuseThread"^"";$rs.Open();$Notify.Runspace=$rs;$Notify.BeginInvoke()};&$^;[System.Windows.Forms.MessageBox]::Show('Re-launch ZipRipper in Offline Mode?', 'Build Complete.',4,32,0,131072)"`) DO (

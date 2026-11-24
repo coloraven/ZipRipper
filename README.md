@@ -1,4 +1,4 @@
-# ZipRipper - A CMD script to crack password protected ZIP, RAR, 7z, and PDF files, using JohnTheRipper
+# ZipRipper - A CMD script to crack password protected ZIP, RAR, 7z, PDF, and Microsoft Office files, using JohnTheRipper
 
 <p align="center">
 <img src="https://github.com/illsk1lls/ZipRipper/blob/main/.resources/README.png?raw=true"><br>
@@ -10,12 +10,13 @@ JohnTheRipper - <a href="https://github.com/openwall/john">https://github.com/op
 cyclone_hk Wordlist(Hosted by Weakpass) - <a href="https://github.com/cyclone-github/wordlist">https://github.com/cyclone-github/wordlist</a><br>
 7zip - <a href="https://www.7-zip.org/">https://www.7-zip.org/</a><br>
 StrawberryPerl(Portable) - <a href="https://strawberryperl.com/releases.html">https://strawberryperl.com/releases.html</a><br>
+Python(Portable/Embeddable) - <a href="https://www.python.org/downloads/windows/">https://www.python.org/downloads/windows/</a><br>
 
 **<p align="center">Instructions:**</p>
 
 **<p align="center">1.) Double-click the script, and click the Start button to begin**</p>
 
-**<p align="center">2.) Choose a password protected ZIP, RAR, 7z, or PDF file**</p>
+**<p align="center">2.) Choose a password protected ZIP, RAR, 7z, PDF, or Office (DOC/DOCM/DOCX/XLS/XLSM/XLSX/PPT/PPTM/PPTX) file**</p>
 
 **<p align="center">3.) Wait  for  password..**</p>
 
@@ -23,6 +24,11 @@ StrawberryPerl(Portable) - <a href="https://strawberryperl.com/releases.html">ht
 *saved to the users desktop as:* ZipRipper-Passwords.txt</p>
 
 If you have questions, head on over to <a href="https://github.com/illsk1lls/ZipRipper/discussions/categories/q-a">Discussions Q&A</a><br>
+
+**Microsoft Office support:**<br>
+Office documents are supported through John's `office2john.py`, which covers the modern OOXML formats (.docx, .docm, .xlsx, .xlsm, .pptx, .pptm) and the legacy binary formats (.doc, .xls, .ppt). Office 2007/2010/2013 encrypted files use the `office` format (OpenCL: `office-opencl`), while Office 97-2003 encrypted files use the `oldoffice` format (OpenCL: `oldoffice-opencl`).<br>
+Because `office2john.py` is a Python script, ZipRipper downloads a small portable Python (embeddable, ~11MB) when an Office file is selected in Online Mode. Offline Mode requires `[zr-offline.txt]` to be rebuilt (click the letters JtR in John's hat) so the portable Python is embedded in it - if it is missing, ZipRipper falls back to a locally installed Python, and reports an error if neither is available.<br>
+Note: Office 2010/2013 hashes use high spin counts, so they can be slow to attack compared to ZIP/RAR.<br>
 
 **Current version provides support for hardware acceleration via OpenCL for:**<br>
 nVidia "GeForce", "Quadro", "A Series", "RTX Ada" and AMD "Radeon RX", "Radeon Pro" cards<br>
